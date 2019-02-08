@@ -1,0 +1,94 @@
+---
+- hosts: all
+  tasks:
+  - name: Create Folcer OCP39-BKP
+    shell: mkdir /ocp39-bkp
+- hosts: masters
+  tasks:
+  - name: Create Folcer OCP39-BKP/Master
+    shell: mkdir /ocp39-bkp/master
+  - name: Backup atomic-openshift-master-api.service file
+    copy:
+      src: /usr/lib/systemd/system/atomic-openshift-master-api.service
+      dest: /ocp39-bkp/master/atomic-openshift-master-api.service
+      backup: yes
+      remote_src: yes
+  - name: Backup atomic-openshift-master-controllers.service file
+    copy:
+      src: /usr/lib/systemd/system/atomic-openshift-master-controllers.service
+      dest: /ocp39-bkp/master/atomic-openshift-master-controllers.service
+      backup: yes
+      remote_src: yes
+  - name: Backup atomic-openshift-master-api file
+    copy:
+      src: /etc/sysconfig/atomic-openshift-master-api
+      dest: /ocp39-bkp/master/atomic-openshift-master-api
+      backup: yes
+      remote_src: yes
+  - name: Backup atomic-openshift-master-controllers file
+    copy:
+      src: /etc/sysconfig/atomic-openshift-master-controllers
+      dest: /ocp39-bkp/master/atomic-openshift-master-controllers
+      backup: yes
+      remote_src: yes
+  - name: Backup master-config.yaml file
+    copy:
+      src: /etc/origin/master/master-config.yaml
+      dest: /ocp39-bkp/master/master-config.yaml
+      backup: yes
+      remote_src: yes
+  - name: Backup scheduler.json file
+    copy:
+      src: /etc/origin/master/scheduler.json
+      dest: /ocp39-bkp/master/scheduler.json
+      backup: yes
+      remote_src: yes
+- hosts: etcd
+  tasks:
+  - name: Create Folcer OCP39-BKP/etcd
+    shell: mkdir /ocp39-bkp/etcd
+  - name: Backup etcd directory
+    synchronize:
+      src: /etc/etcd/
+      dest: /ocp39-bkp/etcd/
+    delegate_to: "{{ inventory_hostname }}"
+- hosts: nodes
+  tasks:
+  - name: Create Folcer OCP39-BKP/Node
+    shell: mkdir /ocp39-bkp/node
+  - name: Backup atomic-openshift-node.service file
+    copy:
+      src: /usr/lib/systemd/system/atomic-openshift-node.service
+      dest: /ocp39-bkp/node/atomic-openshift-node.service
+      backup: yes
+      remote_src: yes
+  - name: Backup node-config.yaml file
+    copy:
+      src: /etc/origin/node/node-config.yaml
+      dest: /ocp39-bkp/node/node-config.yaml
+      backup: yes
+      remote_src: yes
+- hosts: all
+  tasks:
+  - name: Disable all RHSM repositories
+    rhsm_repository:
+      name: 'rhel-7-server-ose-3.9-rpms'
+      state: disabled
+  - name: Enable rhel-7-server-ose-3.10-rpms repositorie
+    rhsm_repository:
+      name: "rhel-7-server-ose-3.10-rpms"
+      state: enabled
+  - name: Enable rhel-7-server-rpms repositorie
+    rhsm_repository:
+      name: "rhel-7-server-rpms"
+      state: enabled
+  - name: Enable rhel-7-server-extras-rpms repositorie
+    rhsm_repository:
+      name: "rhel-7-server-extras-rpms"
+      state: enabled
+  - name: Enable rhel-7-server-ansible-2.4-rpms repositorie
+    rhsm_repository:
+      name: "rhel-7-server-ansible-2.4-rpms"
+      state: enabled
+  - name: Clean yum repositorie
+    shell: yum clean all
